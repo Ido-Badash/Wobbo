@@ -1,0 +1,10 @@
+{
+    "keyboard": {
+        "right": "d",
+        "left": "a",
+        "jump": "space"
+    },
+    "screen": {
+        "fps": 60
+    }
+}
