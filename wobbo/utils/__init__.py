@@ -1,4 +1,4 @@
-from .helpers import exit_game, load_pygame_image, color_up
+from .helpers import exit_game, load_pygame_image, color_up, check_idx_in_range
 from .decorators import catch_it
 from .logger import logging_setup
 

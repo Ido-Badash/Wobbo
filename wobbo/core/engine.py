@@ -1,7 +1,9 @@
 import pygame
+import logging
 from .scene_manager import SceneManager
-from ..scenes import *
-from ..utils import constants
+from .scene import Scene
+from wobbo.scenes import *
+from wobbo.utils import constants, check_idx_in_range, color_up
 
 class Engine:
     def __init__(self, width, height, fps):
@@ -18,8 +20,10 @@ class Engine:
         main_menu = MainMenu([])
         
         # Effects
-        self.fade_effect = Fade(self.screen, 1)
-        self.start_fade = False
+        self.fade_effect = Fade(self.screen, 10)
+        self.fade_scene_move = None
+        self.start_fade_effect = False
+        self.move_scene = "next"
         
         # Scenes Setup
         self.scene_manager = SceneManager()
@@ -31,12 +35,11 @@ class Engine:
         
     def run(self):
         """Main game loop."""
-
         while self.running:
             self.handle_events()
             self.scene_manager.update()
-            self.scene_manager.render(self.screen)
-            self.fade()
+            self.scene_manager.render(self.screen)   
+            self.fade_transition(self.fade_scene_move)
             pygame.display.flip()
             self.clock.tick(self.fps)
 
@@ -46,18 +49,50 @@ class Engine:
             if event.type == pygame.QUIT:
                 self.running = False
             if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_n and constants.RUN_AS_ADMIN:
-                    self.start_fade = True
+                # --- Admin Keys ---
+                if constants.RUN_AS_ADMIN:
+                    if event.key == pygame.K_n:
+                        if check_idx_in_range(self.scene_manager.get_next_scene_idx(), self.scene_manager.scenes):
+                            logging.debug(f"Moving to the next scene '{self.scene_manager.get_next_scene().__class__.__name__}'")
+                            self.move_scene = "next"
+                            self.start_fade_effect = True
+                            
+                    if event.key == pygame.K_p:
+                        if check_idx_in_range(self.scene_manager.get_previous_scene_idx(), self.scene_manager.scenes):
+                            logging.debug(f"Moving to the previous scene '{self.scene_manager.get_previous_scene().__class__.__name__}'")
+                            self.move_scene = "previous"
+                            self.start_fade_effect = True
+                    
             self.scene_manager.handle_event(event)
             
-    def fade(self):
-        """Fade effect handle."""
-        if self.start_fade:
+    def move_to_scene(self, scene: Scene):
+        """Move to a specific scene, with a fade effect."""
+        logging.debug(f"Moving to the scene '{scene.__class__.__name__}'")
+        self.fade_transition(scene)
+            
+    def fade_transition(self, to_scene: Scene = None):
+        """Transition between scenes using a fade effect.
+        The `scene` parameter is optional, if not provided,
+        the scene will be chosen by the `move_scene`.
+        """
+        if self.start_fade_effect:
             self.fade_effect.update()
-            self.finished_fade = self.fade_effect.render(self.screen)
+            finished_fade = self.fade_effect.render(self.screen)
             if self.fade_effect.reached_middle:
-                self.screen.fill((0, 0, 0))
-                self.scene_manager.next_scene()
+                if self.move_scene == "next":
+                    scene = self.scene_manager.get_next_scene()
+                elif self.move_scene == "previous":
+                    scene = self.scene_manager.get_previous_scene()
+                else:
+                    if to_scene is not None:
+                        scene = to_scene
+                    else:
+                        logging.error(color_up("No scene provided to move to, using the current scene."))
+                        scene = self.scene_manager.get_current_scene() 
+                    
+                self.scene_manager.set_scene(scene)
                 self.fade_effect.reached_middle = False
-            if self.finished_fade:
-                self.start_fade = False
+                
+            if finished_fade:
+                self.start_fade_effect = False
+                self.fade_effect.reset()

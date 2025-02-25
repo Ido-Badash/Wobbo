@@ -1,5 +1,5 @@
 import pygame
-from ...core.scene import Scene
+from wobbo.core.scene import Scene
 
 class Tutorial(Scene):
     def __init__(self, objects=[]):

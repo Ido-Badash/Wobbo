@@ -1,5 +1,5 @@
 import os
-from ..utils import load_pygame_image, constants
+from wobbo.utils import load_pygame_image, constants
 
 def load_assets():
     assets_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "assets")

@@ -1,6 +1,6 @@
 import pygame
 from .entity import Entity
-from ..utils.constants import ASSETS
+from wobbo.utils.constants import ASSETS
 
 class Player(Entity):
     def __init__(self, x, y, width, height):

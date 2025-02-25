@@ -1,7 +1,6 @@
-import time
 import pygame
 import logging
-from ..utils.helpers import load_pygame_image
+from wobbo.utils.helpers import load_pygame_image
 
 class Entity:
     def __init__(self, x: int, y: int, width: int, height: int,

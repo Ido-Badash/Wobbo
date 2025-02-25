@@ -11,9 +11,12 @@ class Text:
         self.bg_color = bg_color
         self.text_surf = self.font.render(self.text, self.antialias, self.color, self.bg_color)
         
-    def draw(self, surface: pygame.Surface, x: int, y: int):
+    def render(self, surface: pygame.Surface, x: int, y: int):
         """Draws the text on the surface at the given position."""
         surface.blit(self.text_surf, (x, y))
+        
+    def get_rect(self):
+        return self.text_surf.get_rect()
                 
     def set_text(self, text: str):
         self.text = text

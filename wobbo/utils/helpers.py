@@ -30,3 +30,8 @@ def color_up(msg: str, fore: str = Fore.RED,
     return f"{fore}{style}{back}{msg}{Back.RESET}{Style.RESET_ALL}{Fore.RESET}"\
         if back\
         else f"{fore}{style}{msg}{Style.RESET_ALL}{Fore.RESET}"
+
+# --- Math Helpers ---
+def check_idx_in_range(num: float | int, data):
+    """Check if the index is in range of the data."""
+    return 0 <= num < len(data)
