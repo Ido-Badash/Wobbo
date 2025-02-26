@@ -70,15 +70,15 @@ class Fade(Scene):
         
         screen.blit(self.fade_surface, (0, 0))
         return False
-       
-    def get_current_alpha(self) -> int:
-        return self.current_alpha
     
     def reset(self):
         self.reached_middle = False
         self.run_once = True
         self.fading_in = True
         self.current_alpha = self.min_alpha
+       
+    def get_current_alpha(self) -> int:
+        return self.current_alpha
     
     #* --- Fade Logic ---
     def _fade_in(self, max_alpha: int, alpha_speed: int) -> bool:

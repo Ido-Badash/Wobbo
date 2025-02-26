@@ -1,5 +1,5 @@
-from .level_one import LevelOne
-from .level_two import LevelTwo
-from .level_three import LevelThree
+from .level_one import Level1
+from .level_two import Level2
+from .level_three import Level3
 
-__all__ = ["LevelOne", "LevelTwo", "LevelThree"]
+__all__ = [f"Level{i}" for i in range(1, 4)]

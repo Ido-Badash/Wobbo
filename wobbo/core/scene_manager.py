@@ -40,11 +40,17 @@ class SceneManager:
     def render(self, screen: pygame.Surface):
         """Render all scenes, a scene must have a render method."""
         self.current_scene.render(screen)
+    
+    @is_current_scene()
+    def reset(self):
+        """Reset all scenes, a scene must have a reset method."""
+        self.current_scene.reset()        
         
     # --- Scene Management ---
     def set_scene(self, scene: Scene):
         """Set the current scene, scene must be a Scene object."""
         self.current_scene = scene
+        self.current_scene.reset()
         
     def add_scene(self, scene):
         """Add a scene to the scene manager, scene must be a Scene object."""
@@ -83,14 +89,14 @@ class SceneManager:
     def next_scene(self):
         """Set the next scene as the current scene."""
         if self.current_scene is not None:
-            self.current_scene = self.get_next_scene()
+            self.set_scene(self.get_next_scene())
         else:
             logging.error(color_up("There is no next scene to move to."))
         
     def previous_scene(self):
         """Set the previous scene as the current scene."""
         if self.current_scene is not None:
-            self.current_scene = self.get_previous_scene()
+            self.set_scene(self.get_previous_scene())
         else:
             logging.error(color_up("There is no previous scene to move to."))
     

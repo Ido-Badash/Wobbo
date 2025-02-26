@@ -5,7 +5,7 @@ import logging
 from colorama import Fore, Back, Style
 
 def exit_game(exit_code=0):
-    """Exit the game and log a message."""
+    """Exits the game."""
     pygame.quit()
     sys.exit(exit_code)
     

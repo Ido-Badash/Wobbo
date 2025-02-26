@@ -1,11 +1,11 @@
 from .effects import Fade
-from .levels import LevelOne, LevelTwo, LevelThree
+from .levels import *
 from .menus import ExitMenu, MainMenu, PauseMenu
 from .tutorial import Tutorial
 
 __all__ = [
     "Fade",
-    "LevelOne", "LevelTwo", "LevelThree",
+    "Level1", "Level2", "Level3",
     "ExitMenu", "MainMenu", "PauseMenu",
     "Tutorial"
 ]

@@ -1,7 +1,7 @@
 import pygame
 
 class Scene:
-    def __init__(self, objects: list[object]):
+    def __init__(self, objects: list):
         self.objects = objects
         
     def handle_event(self, event: pygame.event.Event):
@@ -18,3 +18,12 @@ class Scene:
         """Render all objects in the scene."""
         for obj in self.objects:
             obj.render(screen)
+            
+    def reset(self):
+        """Reset all objects in the scene."""        
+        for obj in self.objects:
+            obj.reset()
+    
+    @staticmethod
+    def get_screen_avrg(screen: pygame.Surface) -> int:
+        return int((screen.get_width() + screen.get_height())/2)

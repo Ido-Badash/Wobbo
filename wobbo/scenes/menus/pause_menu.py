@@ -14,3 +14,6 @@ class PauseMenu(Scene):
     
     def render(self, screen: pygame.Surface):
         super().render(screen)
+        
+    def reset(self):
+        super().reset()

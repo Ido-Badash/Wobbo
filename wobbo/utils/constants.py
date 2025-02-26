@@ -16,6 +16,16 @@ GRAVITY = 0.5
 # size
 PLAYER_SIZE = (50, 50)
 
-#* --- Game ---
-# font
+#* ------- Game -------
+# -~-~- font and text -~-~-
+# ~~~ font ~~~
 GAME_FONT = path_exists("wobbo/assets/fonts/game_font.ttf")
+
+# ~~~ text ~~~
+# - titles -~
+# title sizes
+LEVEL_TITLE_SIZE_FACTOR = 0.05
+
+# title effects
+LEVEL_TITLE_FADE_TIME = 500
+LEVEL_TITLE_FADE_SPEED = 1

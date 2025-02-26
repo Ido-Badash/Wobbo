@@ -1,8 +1,6 @@
-from .helpers import exit_game, load_pygame_image, color_up, check_idx_in_range
+from .helpers import exit_game, load_pygame_image, check_idx_in_range, color_up
 from .decorators import catch_it
 from .logger import logging_setup
-
 __all__ = [
-    "exit_game", "load_pygame_image", "color_up",
-    "catch_error", "time_it", "main_setup",
-    "logging_setup"]
+    "exit_game", "load_pygame_image", "check_idx_in_range","color_up",
+    "catch_it", "logging_setup"]
