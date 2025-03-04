@@ -9,8 +9,6 @@ RUN_AS_ADMIN = True
 X_VELOCITY = 5
 
 # y pos
-Y_VELOCITY = 5
-JUMP_HEIGHT = 10
 GRAVITY = 0.5
 
 # size
@@ -25,6 +23,7 @@ GAME_FONT = path_exists("wobbo/assets/fonts/game_font.ttf")
 # - titles -~
 # title sizes
 LEVEL_TITLE_SIZE_FACTOR = 0.05
+SPECS_TEXT_SIZE_FACTOR = 0.04
 
 # title effects
 LEVEL_TITLE_FADE_TIME = 500

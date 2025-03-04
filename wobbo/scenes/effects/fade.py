@@ -1,5 +1,5 @@
 import pygame
-from wobbo.core.scene import Scene
+from wobbo.core import Scene
 from wobbo.utils.colors import *
 
 class Fade(Scene):

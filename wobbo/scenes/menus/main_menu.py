@@ -1,5 +1,5 @@
 import pygame
-from wobbo.core.scene import Scene
+from wobbo.core import Scene
 
 class MainMenu(Scene):
     def __init__(self, objects=[]):

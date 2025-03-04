@@ -27,3 +27,6 @@ NAVY = (0, 0, 128)
 AQUA = (0, 128, 128)
 FUCHSIA = (255, 0, 255)
 SILVER = (192, 192, 192)
+
+#* --- Special Colors --- *#
+TRANSPARENT = (0, 0, 0, 0)

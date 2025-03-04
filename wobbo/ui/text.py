@@ -10,7 +10,7 @@ class Text:
         self.alpha = alpha
         self.antialias = antialias
         self.bg_color = bg_color
-        self.update()
+        self.text_surf = self.font.render(self.text, self.antialias, self.color, self.bg_color)
         
     def update(self):
         self.text_surf = self.font.render(self.text, self.antialias, self.color, self.bg_color)
@@ -35,6 +35,16 @@ class Text:
     def get_rect(self) -> pygame.Rect:
         """Returns the rectangle of the text surface."""
         return self.text_surf.get_rect()
+    
+    def set_font(self, font: pygame.font.Font):
+        """Sets the font."""
+        self.font = font
+        self.update()
+    
+    def set_text(self, text: str):
+        """Sets the text."""
+        self.text = text
+        self.update()
     
 def render_fade_out_text(surf: pygame.Surface, reset_timer: int,
                         text: Text, text_pos: tuple[int, int],

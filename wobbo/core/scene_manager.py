@@ -44,7 +44,12 @@ class SceneManager:
     @is_current_scene()
     def reset(self):
         """Reset all scenes, a scene must have a reset method."""
-        self.current_scene.reset()        
+        self.current_scene.reset()
+    
+    @is_current_scene()
+    def render_mask(self, screen: pygame.Surface):
+        """Render the masks for all scenes, a scene must have a render_mask method."""
+        self.current_scene.render_mask(screen)  
         
     # --- Scene Management ---
     def set_scene(self, scene: Scene):

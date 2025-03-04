@@ -2,9 +2,12 @@
     "keyboard": {
         "right": "d",
         "left": "a",
-        "jump": "space"
+        "jump": "SPACE"
     },
     "screen": {
-        "fps": 60
+        "fps": 60,
+        "show_fps": false,
+        "show_cpu": false,
+        "show_memory": false
     }
 }

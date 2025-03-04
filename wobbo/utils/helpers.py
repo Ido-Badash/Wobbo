@@ -35,3 +35,7 @@ def color_up(msg: str, fore: str = Fore.RED,
 def check_idx_in_range(num: float | int, data):
     """Check if the index is in range of the data."""
     return 0 <= num < len(data)
+
+def find_avrg(*nums: float | int, factor: float | int = 0) -> float | int:
+    """Find the average of the numbers."""
+    return sum(nums) / len(nums) * factor

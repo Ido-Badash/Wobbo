@@ -1,4 +1,5 @@
 import pygame
+import logging
 
 class Scene:
     def __init__(self, objects: list):
@@ -23,6 +24,11 @@ class Scene:
         """Reset all objects in the scene."""        
         for obj in self.objects:
             obj.reset()
+            
+    def render_mask(self, screen: pygame.Surface):
+        """Render the masks for all objects in the scene."""
+        for obj in self.objects:
+            obj.render_mask(screen)
     
     @staticmethod
     def get_screen_avrg(screen: pygame.Surface) -> int:

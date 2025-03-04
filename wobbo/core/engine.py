@@ -1,18 +1,28 @@
+import os
+import json
+import psutil
 import pygame
 import logging
-from .scene_manager import SceneManager
 from .scene import Scene
+from .scene_manager import SceneManager
+from wobbo.ui import Text
 import wobbo.scenes as scenes
-from wobbo.utils import constants, check_idx_in_range, color_up
+from wobbo.utils import constants, colors, check_idx_in_range, color_up, find_avrg
 
 class Engine:
-    def __init__(self, width, height, fps):
+    def __init__(self, width, height, min_width=None, min_height=None):
         pygame.init()
         self.screen = pygame.display.set_mode((width, height), pygame.RESIZABLE)
         pygame.display.set_caption("Wobbo")
         
+        self.width = width
+        self.height = height
+        self.min_width = min_width
+        self.min_height = min_height
+        
+        self.settings = json.loads(open("wobbo/config/settings.json").read())
         self.clock = pygame.time.Clock()
-        self.fps = fps
+        self.fps = self.settings["screen"]["fps"]
         self.running = True    
         
         # Menus
@@ -33,6 +43,14 @@ class Engine:
         self.start_fade_effect = False
         self.move_close_scene = "next"
         
+        # Game specs
+        self.process = psutil.Process(os.getpid())
+        self.specs_font_size = self._update_spec_size()
+        self.specs_font = pygame.font.Font(constants.GAME_FONT, self.specs_font_size)
+        self.memory = Text("", self.specs_font, colors.WHITE, 100)
+        self.current_fps = Text("", self.specs_font, colors.WHITE, 100)
+        self.spec_time_jump = 1000
+        
         # Scenes Setup
         self.scene_manager = SceneManager()
         
@@ -44,11 +62,30 @@ class Engine:
     def run(self):
         """Main game loop."""
         while self.running:
+            self.specs_timer = pygame.time.get_ticks()
             self.handle_events()
             self.scene_manager.update()
-            self.scene_manager.render(self.screen)   
+            self.scene_manager.render(self.screen)  
+            self.scene_manager.render_mask(self.screen) 
             self.fade_transition(self.fade_scene_move)
-            pygame.display.flip()
+
+            # --- Display the game specs ---
+            # fps
+            if self.settings["screen"]["show_fps"] or constants.RUN_AS_ADMIN:
+                self.current_fps.set_text(f"FPS: {int(self.clock.get_fps())}")
+                self.specs_font_size = self._update_spec_size()
+                self.current_fps.set_font(self.specs_font)
+                self.current_fps.render(self.screen, 10, 50)
+            
+            # memory 
+            if self.settings["screen"]["show_memory"] or constants.RUN_AS_ADMIN:
+                self.memory_bytes = self.process.memory_info().rss
+                self.memory.set_text(f"Memory: {self.memory_bytes / (1024 ** 2):.2f} MB")
+                self.specs_font_size = self._update_spec_size()
+                self.memory.set_font(self.specs_font)
+                self.memory.render(self.screen, 10, 10)
+            
+            pygame.display.flip() # updates the display
             self.clock.tick(self.fps)
 
     def handle_events(self):
@@ -56,6 +93,14 @@ class Engine:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.running = False
+            
+            # --- Min width and height of screen ---
+            if event.type == pygame.VIDEORESIZE:
+                screen_w, screen_h = self.screen.get_size()
+                screen_w = max(screen_w, self.min_width)
+                screen_h = max(screen_h, self.min_height)
+                self.screen = pygame.display.set_mode((screen_w, screen_h), pygame.RESIZABLE)
+                
             if event.type == pygame.KEYDOWN:
                 # --- Admin Keys ---
                 if constants.RUN_AS_ADMIN:
@@ -74,7 +119,16 @@ class Engine:
                             self.start_fade_effect = True
                     
             self.scene_manager.handle_event(event)
-            
+
+    def _update_spec_size(self) -> int:
+        """Update the font size of the game specs."""
+        new_spec_font_size = int(find_avrg(
+                self.screen.get_width(),
+                self.screen.get_height(),
+                factor=constants.SPECS_TEXT_SIZE_FACTOR
+                ))
+        return new_spec_font_size
+        
     def move_to_scene(self, scene: Scene):
         """Move to a specific scene, with a fade effect."""
         logging.debug(f"Moving to the scene '{scene.__class__.__name__}'")
