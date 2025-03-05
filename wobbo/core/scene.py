@@ -9,6 +9,10 @@ class Scene:
         """Handle events for all objects in the scene."""
         for obj in self.objects:
             obj.handle_event(event)
+            
+    def manage_scene(self, scene_manager, engine):
+        """Manage the scene."""
+        pass
                      
     def update(self):
         """Update all objects in the scene."""
@@ -31,5 +35,7 @@ class Scene:
             obj.render_mask(screen)
     
     @staticmethod
-    def get_screen_avrg(screen: pygame.Surface) -> int:
-        return int((screen.get_width() + screen.get_height())/2)
+    def get_screen_avrg(screen: pygame.Surface, factor: int = 1) -> int:
+        return int(((screen.get_width() + screen.get_height())/2) * factor)
+    
+    

@@ -32,6 +32,12 @@ class SceneManager:
         self.current_scene.handle_event(event)
     
     @is_current_scene()
+    def manage_scene(self, engine):
+        """Manage all scenes, this method is optional for a scene."""
+        if hasattr(self.current_scene, "manage_scene"):
+            self.current_scene.manage_scene(self, engine)
+    
+    @is_current_scene()
     def update(self):
         """Update all scenes, a scene must have an update method."""
         self.current_scene.update()
@@ -67,11 +73,11 @@ class SceneManager:
     
     # --- Scene Navigation ---
     @is_current_scene()
-    def get_current_scene(self):
+    def get_current_scene(self) -> Scene | None:
         """Return the current scene, in the form of a Scene object."""
         return self.current_scene
     
-    def get_next_scene(self):
+    def get_next_scene(self) -> Scene | None:
         """Returns the next scene as a `Scene` object."""
         next_index = self.get_next_scene_idx()
         # makes sure that `next_index` is in range of `len(self.scenes)`
@@ -81,7 +87,7 @@ class SceneManager:
             logging.error(color_up("Cannot get the next scene because the current scene is the last one."))
             return None
       
-    def get_previous_scene(self):
+    def get_previous_scene(self) -> Scene | None:
         """Returns the previous scene as a `Scene` object."""
         previous_index = self.get_previous_scene_idx()
         # makes sure that `previous_scene` is in range of `len(self.scenes)`

@@ -17,3 +17,6 @@ class Npc(Entity):
     
     def reset(self):
         pass
+
+    def render_mask(self, screen):
+        pass

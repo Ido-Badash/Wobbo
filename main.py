@@ -14,13 +14,18 @@ def main():
     pygame_init = pygame.init()
     if pygame_init[1] != 0:
         logging.error(f"Pygame failed to initialize: {pygame.get_error()}.")
+    pygame.mixer.init()
+        
     user_display = pygame.display.Info()
     user_w, user_h = user_display.current_w, user_display.current_h
-    engine = Engine(user_w/1.5, user_h/1.5, user_w/2.5, user_h/2.5)
+    screen_flags = pygame.RESIZABLE
+    screen = pygame.display.set_mode((user_w/1.25, user_h/1.25), screen_flags)
+    
+    engine = Engine(screen, user_w/1.75, user_h/1.75, screen_flags=screen_flags)
     engine.run()
     
     logging.info("Program finished")
     exit_game()
-    
+    9
 if __name__ == "__main__":
     main()

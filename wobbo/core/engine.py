@@ -10,20 +10,23 @@ import wobbo.scenes as scenes
 from wobbo.utils import constants, colors, check_idx_in_range, color_up, find_avrg
 
 class Engine:
-    def __init__(self, width, height, min_width=None, min_height=None):
-        pygame.init()
-        self.screen = pygame.display.set_mode((width, height), pygame.RESIZABLE)
-        pygame.display.set_caption("Wobbo")
+    def __init__(self, screen: pygame.Surface, min_width=None, min_height=None, caption: str = "Wobbo", screen_flags: int = 0):
+        self.screen = screen
+        pygame.display.set_caption(caption)
+        self.screen_flags = screen_flags
         
-        self.width = width
-        self.height = height
+        self.width = self.screen.get_width()
+        self.height = self.screen.get_height()
         self.min_width = min_width
         self.min_height = min_height
         
         self.settings = json.loads(open("wobbo/config/settings.json").read())
         self.clock = pygame.time.Clock()
         self.fps = self.settings["screen"]["fps"]
-        self.running = True    
+        self.running = True   
+        
+        # Scene Manager
+        self.scene_manager = SceneManager() 
         
         # Menus
         exit_menu = scenes.ExitMenu()
@@ -47,16 +50,18 @@ class Engine:
         self.process = psutil.Process(os.getpid())
         self.specs_font_size = self._update_spec_size()
         self.specs_font = pygame.font.Font(constants.GAME_FONT, self.specs_font_size)
-        self.memory = Text("", self.specs_font, colors.WHITE, 100)
-        self.current_fps = Text("", self.specs_font, colors.WHITE, 100)
+        self.memory = Text("", self.specs_font, colors.WHITE, 50)
+        self.current_fps = Text("", self.specs_font, colors.WHITE, 50)
         self.spec_time_jump = 1000
         
-        # Scenes Setup
-        self.scene_manager = SceneManager()
+        # Masks
+        self.show_masks = False
         
+        # Scenes Setup        
         all_scenes = [main_menu, exit_menu, tutorial, level_1, level_2, level_3]
         for scene in all_scenes:
             self.scene_manager.add_scene(scene)
+            
         self.scene_manager.set_scene(tutorial)
         
     def run(self):
@@ -64,9 +69,10 @@ class Engine:
         while self.running:
             self.specs_timer = pygame.time.get_ticks()
             self.handle_events()
+            self.scene_manager.manage_scene(self)
             self.scene_manager.update()
             self.scene_manager.render(self.screen)  
-            self.scene_manager.render_mask(self.screen) 
+            self.scene_manager.render_mask(self.screen) if self.show_masks else None
             self.fade_transition(self.fade_scene_move)
 
             # --- Display the game specs ---
@@ -91,6 +97,7 @@ class Engine:
     def handle_events(self):
         """Handle all events."""
         for event in pygame.event.get():
+            mods = pygame.key.get_mods()
             if event.type == pygame.QUIT:
                 self.running = False
             
@@ -99,24 +106,23 @@ class Engine:
                 screen_w, screen_h = self.screen.get_size()
                 screen_w = max(screen_w, self.min_width)
                 screen_h = max(screen_h, self.min_height)
-                self.screen = pygame.display.set_mode((screen_w, screen_h), pygame.RESIZABLE)
+                self.screen = pygame.display.set_mode((screen_w, screen_h), self.screen_flags)
                 
             if event.type == pygame.KEYDOWN:
                 # --- Admin Keys ---
                 if constants.RUN_AS_ADMIN:
                     # the `and not self.start_fade_effect` is to avoid
                     # moving to another scene while the fade effect is running
-                    if event.key == pygame.K_n and not self.start_fade_effect:
+                    if event.key == pygame.K_n and mods & pygame.KMOD_CTRL and not self.start_fade_effect:
                         if check_idx_in_range(self.scene_manager.get_next_scene_idx(), self.scene_manager.scenes):
-                            logging.debug(f"Moving to the next scene '{self.scene_manager.get_next_scene().__class__.__name__}'")
-                            self.move_close_scene = "next"
-                            self.start_fade_effect = True
+                            self.move_to_scene(self.scene_manager.get_next_scene())
                             
-                    if event.key == pygame.K_p and not self.start_fade_effect:
+                    if event.key == pygame.K_p and mods & pygame.KMOD_CTRL and not self.start_fade_effect:
                         if check_idx_in_range(self.scene_manager.get_previous_scene_idx(), self.scene_manager.scenes):
-                            logging.debug(f"Moving to the previous scene '{self.scene_manager.get_previous_scene().__class__.__name__}'")
-                            self.move_close_scene = "previous"
-                            self.start_fade_effect = True
+                            self.move_to_scene(self.scene_manager.get_previous_scene())
+                            
+                    if event.key == pygame.K_m and mods & pygame.KMOD_CTRL:
+                        self.show_masks = not self.show_masks
                     
             self.scene_manager.handle_event(event)
 
@@ -132,28 +138,31 @@ class Engine:
     def move_to_scene(self, scene: Scene):
         """Move to a specific scene, with a fade effect."""
         logging.debug(f"Moving to the scene '{scene.__class__.__name__}'")
-        self.fade_transition(scene)
-            
+        self.start_fade_effect = True
+        self.fade_scene_move = scene
+        
     def fade_transition(self, to_scene: Scene):
         """Transition between scenes using a fade effect."""
         if self.start_fade_effect:
-            self.fade_effect.update()
-            finished_fade = self.fade_effect.render(self.screen)
-            if self.fade_effect.reached_middle:
-                if self.move_close_scene == "next":
-                    scene = self.scene_manager.get_next_scene()
-                elif self.move_close_scene == "previous":
-                    scene = self.scene_manager.get_previous_scene()
+            self.start_fade_effect = not self.transition(to_scene, self.fade_effect, self.start_fade_effect)
+            
+    def transition(self, to_scene: Scene, effect: scenes.Fade, flag) -> bool:
+        """Transition between scenes using an effect, returns True when the transition is finished."""
+        if flag:
+            effect.update()
+            finished_fade = effect.render(self.screen)
+            if effect.reached_middle:
+                if to_scene is not None:
+                    scene = to_scene
                 else:
-                    if to_scene is not None:
-                        scene = to_scene
-                    else:
-                        logging.error(color_up("No scene provided to move to, using the current scene."))
-                        scene = self.scene_manager.get_current_scene() 
+                    logging.error(color_up("No scene provided to move to, using the current scene."))
+                    scene = self.scene_manager.get_current_scene() 
                     
                 self.scene_manager.set_scene(scene)
-                self.fade_effect.reached_middle = False
+                effect.reached_middle = False
                 
             if finished_fade:
-                self.start_fade_effect = False
-                self.fade_effect.reset()
+                flag = False
+                effect.reset()
+                return True
+        return False

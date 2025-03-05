@@ -23,10 +23,15 @@ BROWN = (165, 42, 42)
 #* --- Base Tertiary Colors --- *#
 MAROON = (128, 0, 0)
 OLIVE = (128, 128, 0)
-NAVY = (0, 0, 128)
+NAVY = (54, 65, 97)
 AQUA = (0, 128, 128)
 FUCHSIA = (255, 0, 255)
 SILVER = (192, 192, 192)
 
 #* --- Special Colors --- *#
 TRANSPARENT = (0, 0, 0, 0)
+
+#* --- My Colors --- *#
+LIGHT_BANANA = (253, 255, 156)
+PLAYER = GREEN
+ITEMS = YELLOW

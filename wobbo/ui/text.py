@@ -31,6 +31,18 @@ class Text:
                     start_fade = False
                     return True
         return False
+    
+    def fade_in(self, timer: int, fade_after: int = 0, fade_speed: int = 1, max_alpha: int = 255, start_fade: bool = True):
+        """Fades in the text by increasing the alpha value. Returns True when fade is finished.
+        The `fade_after` parameter is the time in milliseconds before fading starts."""
+        if start_fade:
+            if timer > fade_after:
+                self.alpha += fade_speed
+                if self.alpha >= max_alpha:
+                    self.alpha = max_alpha
+                    start_fade = False
+                    return True
+        return False
         
     def get_rect(self) -> pygame.Rect:
         """Returns the rectangle of the text surface."""
@@ -50,8 +62,9 @@ def render_fade_out_text(surf: pygame.Surface, reset_timer: int,
                         text: Text, text_pos: tuple[int, int],
                         fade_after: int = 0, fade_speed: int = 1,
                         min_alpha: int = 0, start_fade: bool = True):
+    """Renders the text with a fade out effect, Returns True when fade is finished."""
     text_fade_timer = pygame.time.get_ticks() - reset_timer
-    text.fade_out(
+    finished = text.fade_out(
         timer=text_fade_timer,
         fade_after=fade_after,
         fade_speed=fade_speed,
@@ -62,3 +75,22 @@ def render_fade_out_text(surf: pygame.Surface, reset_timer: int,
     text.render(surf,
         text_pos[0],
         text_pos[1])
+    return finished
+    
+def render_fade_in_text(surf: pygame.Surface, reset_timer: int,
+                        text: Text, text_pos: tuple[int, int],
+                        fade_after: int = 0, fade_speed: int = 1,
+                        max_alpha: int = 255, start_fade: bool = True):
+    """Renders the text with a fade in effect, Returns True when the fade is finished."""
+    text_fade_timer = pygame.time.get_ticks() - reset_timer
+    finished = text.fade_in(
+        timer=text_fade_timer,
+        fade_after=fade_after,
+        fade_speed=fade_speed,
+        max_alpha=max_alpha,
+        start_fade=start_fade
+    )
+    text.render(surf,
+        text_pos[0],
+        text_pos[1])
+    return finished

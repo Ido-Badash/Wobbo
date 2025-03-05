@@ -3,6 +3,7 @@ import sys
 import pygame
 import logging
 from colorama import Fore, Back, Style
+from . import colors
 
 def exit_game(exit_code=0):
     """Exits the game."""
@@ -17,11 +18,15 @@ def path_exists(image_path):
         raise FileNotFoundError(f"Image path does not exist: {formatted_image_path}")
     return formatted_image_path
     
-def load_pygame_image(image_path: str, image_size: tuple[int, int]) -> pygame.Surface:
-    """Load an image using pygame and return it."""
+def load_pygame_image(image_path: str, image_size: tuple[int, int], convert_to_alpha: bool = True, image_alpha: int = 255) -> pygame.Surface:
+    """Load an image using pygame and return it, use png for alpha channel."""
     image_path = path_exists(image_path)
     image = pygame.image.load(image_path)
     image = pygame.transform.scale(image, image_size)
+    if convert_to_alpha:
+        image = image.convert_alpha()
+        image.set_colorkey()
+        image.set_alpha(image_alpha)
     return image
 
 def color_up(msg: str, fore: str = Fore.RED,

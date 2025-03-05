@@ -6,8 +6,8 @@ class Entity:
     def __init__(self, x: int, y: int, width: int, height: int,
                  health: int = 100, attack_dmg: int = 10,
                  image: pygame.Surface = None,
-                 color: tuple[int, int, int] = None,
-                 name: str = None, active: bool = True):
+                 color: tuple[int, int, int] = None, mask_setcolor: tuple[int, int, int] = colors.TRANSPARENT,
+                 name: str = None, gravity: bool = False):
         self.x = x
         self.y = y
         self.width = width
@@ -16,9 +16,10 @@ class Entity:
         self.attack_dmg = attack_dmg
         self.image = image
         self.color = color
+        self.mask_setcolor = mask_setcolor
         self.name = name
-        self.active = active # this is used to times where the entity cant be moved, like the pause menu
-        
+        self.gravity = gravity # this is used to determine if the entity should be affected by gravity
+            
         self._og_x = x
         self._og_y = y
         self._og_width = width
@@ -28,37 +29,36 @@ class Entity:
         self._og_image = image
         self._og_color = color
         self._og_name = name
-        self._og_active = active
         
         if self.image:
-            self.image.set_colorkey(colors.BLACK)
-            self.mask = pygame.mask.from_surface(self.image)
+            self.update_mask()
         
         self.screen = pygame.display.get_surface()
+        self.rect = pygame.Rect(self.x, self.y, self.width, self.height)
+        self.can_die = True
         
         # jumping
-        self.active_gravity = True
-        self.JUMP_HEIGHT = 10
-        self.Y_VELOCITY = self.JUMP_HEIGHT
+        self.y_vel = constants.JUMP_HEIGHT
+        
         
     def handle_event(self, event: pygame.event.Event):
         """Handle the event."""
         if event.type == pygame.VIDEORESIZE:
             # sets the pos of the entity reletive to the screen width and height
-            self.relative_x = self.x/self.screen.get_width()
-            self.relative_y = self.y/self.screen.get_height() if self.y == self.height else self.height
-            self.update_reletive_position(pygame.display.get_surface())
+            self.reletive_x, self.reletive_y = self.get_reletive_pos(pygame.display.get_surface())
+            self.update_reletive_position(pygame.display.get_surface(), self.reletive_x, self.reletive_y)
     
     def update(self):
-        """Update the entity."""
-        if self.health <= 0:
-            self.kill()
-        
-        if self.active_gravity:
+        """Update the entity."""        
+        if self.gravity:
             if self.y + self.height > 0:
-                self.y += constants.GRAVITY
+                self.y += constants.GRAVITY_PULL
+                
+            elif self.y + self.height <= 0:
+                self.y = self.screen.get_height() - self.height
             
         self.clamp_position(pygame.display.get_surface())
+        self.update_mask()
         
     def render(self, screen: pygame.Surface):
         """Render the entity."""
@@ -71,22 +71,18 @@ class Entity:
             
     def reset(self):
         """Reset the entity."""
-        pass
+        self.reset_all()
     
     def render_mask(self, screen: pygame.Surface):
         """Render the entity's mask."""
-        screen.blit(self.mask.to_surface(setcolor=colors.RED, unsetcolor=colors.TRANSPARENT), self.rect.topleft)
+        if self.health > 0:
+            screen.blit(self.mask_surf, self.rect.topleft)
     
     # --- position ---
     def clamp_position(self, screen: pygame.Surface):
         """Clamps the entity's position."""
         self.x = max(0, min(self.x, screen.get_width() - self.width))
         self.y = max(0, min(self.y, screen.get_height() - self.height))
-        
-    def update_reletive_position(self, screen: pygame.Surface):
-        """Update the entity's position reletive to the screen width and height."""
-        self.x = screen.get_width() * self.relative_x
-        self.y = screen.get_height() * self.relative_y
         
     def move_x_axis(self, amount: int):
         """Move the entity on the x-axis by the amount."""
@@ -98,12 +94,12 @@ class Entity:
     
     def jump(self):
         """Jump the entity, Returns True if the jump is finished."""
-        self.active_gravity = False
-        self.y -= self.Y_VELOCITY
-        self.Y_VELOCITY -= constants.GRAVITY
-        if self.Y_VELOCITY < -self.JUMP_HEIGHT:
-            self.Y_VELOCITY = self.JUMP_HEIGHT
-            self.active_gravity = True
+        self.gravity = False
+        self.y -= self.y_vel
+        self.y_vel -= constants.GRAVITY
+        if self.y_vel < -constants.JUMP_HEIGHT:
+            self.y_vel = constants.JUMP_HEIGHT
+            self.gravity = True
             return True
         return False
     
@@ -113,9 +109,11 @@ class Entity:
         entity.health -= self.attack_dmg
         return entity.health
     
-    def kill(self):
+    def kill(self, reset_after: bool = True):
         """Kills the entity."""
-        self.health = 0
+        if self.can_die:
+            self.health = 0
+            self.reset_all() if reset_after else None
         
     def revive(self):
         """Revive the entity."""
@@ -136,14 +134,6 @@ class Entity:
         """Return True if the entity is alive."""
         return self.health > 0
         
-    def deactive(self):
-        """Deactivate the entity."""
-        self.active = False
-        
-    def activate(self):
-        """Activate the entity."""
-        self.active = True
-        
     # --- Resets ---
     def reset_rect(self, x: int = None, y: int = None, width: int = None, height: int = None):
         """Reset the rectangle values."""
@@ -152,10 +142,11 @@ class Entity:
         self.width = width if width else self._og_width
         self.height = height if height else self._og_height
         
-    def reset_specs(self, health: int = None, attack_dmg: int = None):
+    def reset_specs(self, health: int = None, attack_dmg: int = None, can_die: bool = None):
         """Reset the entity's specs."""
         self.health = health if health else self._og_health
         self.attack_dmg = attack_dmg if attack_dmg else self._og_attack_dmg
+        self.can_die = can_die if can_die else True
         
     def reset_apperance(self, image: str = None, color: tuple[int, int, int] = None, name: str = None):
         """Reset the entity's appearance."""
@@ -163,23 +154,50 @@ class Entity:
         self.color = color if color else self._og_color
         self.name = name if name else self._og_name
         
-    def reset_state(self, active: bool = None):
-        """Reset the entity's state."""
-        self.active = active if active else self._og_active
-        
     def reset_all(self):
         """Reset all the entity's values, complete wipe."""
+        self.revive()
         self.reset_rect()
         self.reset_specs()
         self.reset_apperance()
-        self.reset_state()
         
-    # --- set attributes ---
-    def set_attributes(self, **kwargs):
-        """Set the attributes of the entity."""
-        for key, value in kwargs.items():
-            if hasattr(self, key):
-                setattr(self, key, value)
+    # --- Updates ---
+    def update_mask(self, threshold: int = 127):
+        """Update the entity's mask."""
+        if self.image:
+            self.mask = pygame.mask.from_surface(self.image, threshold)
+            self.mask_surf = self.mask.to_surface(unsetcolor=colors.TRANSPARENT, setcolor=self.mask_setcolor)
+            
+    def update_reletive_position(self, screen: pygame.Surface, x: float, y: float):
+        """Update the entity's position reletive to the screen width and height."""
+        self.x = int(x * screen.get_width())
+        self.y = int(y * screen.get_height())
+        
+    # --- set attributes ---                    
+    def set_img_alpha(self, alpha: int):
+        """Set the image's alpha."""
+        self.image.set_alpha(alpha)
+        
+    def set_size(self, width: int, height: int):
+        """Set the entity's size."""
+        self.width = width
+        self.height = height
+        if self.image:
+            self.image = pygame.transform.scale(self.image, (self.width, self.height))
+            
+    def set_pos(self, x: int, y: int):
+        """Set the entity's position."""
+        self.x = x
+        self.y = y
+        
+    # --- get attributes ---
+    def get_rect(self) -> pygame.Rect:
+        """Return the entity's rectangle."""
+        return pygame.Rect(self.x, self.y, self.width, self.height)
+    
+    def get_reletive_pos(self, screen) -> tuple[int, int]:
+        """Return the entity's position reletive to the screen width and height."""
+        return self.x / screen.get_width(), self.y / screen.get_height()
     
     def __str__(self):
         return f"Entity({self.x}, {self.y}, {self.width}, {self.height},"\
